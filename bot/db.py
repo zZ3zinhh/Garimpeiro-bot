@@ -20,9 +20,15 @@ def _read_env_file():
     return values
 
 
-_env = _read_env_file()
-_BASE_URL = _env["SUPABASE_URL"].rstrip("/") + "/rest/v1/"
-_KEY = _env["SUPABASE_SECRET_KEY"]
+def _setting(name):
+    """Secrets come from the environment (GitHub Actions) or from bot/.env (your PC)."""
+    if os.environ.get(name):
+        return os.environ[name]
+    return _read_env_file()[name]
+
+
+_BASE_URL = _setting("SUPABASE_URL").rstrip("/") + "/rest/v1/"
+_KEY = _setting("SUPABASE_SECRET_KEY")
 
 
 def _request(method, path, body=None, prefer=None):
@@ -103,6 +109,16 @@ def save_sent(person_id, deal_id):
         {"person_id": person_id, "deal_id": deal_id},
         prefer="resolution=ignore-duplicates",
     )
+
+
+def minutes_since_last_run():
+    """How long ago the bot last ran (on any machine). None if it never ran."""
+    rows = _request("GET", "bot_status?select=last_run&id=eq.1")
+    last_run = rows[0]["last_run"] if rows else None
+    if not last_run:
+        return None
+    last = datetime.fromisoformat(last_run)
+    return (datetime.now(timezone.utc) - last).total_seconds() / 60
 
 
 def mark_run(runner):

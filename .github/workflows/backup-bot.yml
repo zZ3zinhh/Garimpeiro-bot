@@ -1,0 +1,40 @@
+# Backup bot: runs on GitHub every 15 minutes, but only does the real work
+# when the PC has been silent for more than 25 minutes.
+name: Backup bot
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"   # GitHub uses UTC time
+  workflow_dispatch:          # lets you start it by hand from the Actions tab
+    inputs:
+      force:
+        description: "Run even if the PC is working (for testing)"
+        type: boolean
+        default: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+      BOT_RUNNER: github
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: bot/requirements.txt
+
+      - run: pip install -r bot/requirements.txt
+
+      - name: Is the PC still working?
+        id: check
+        run: python bot/should_run.py ${{ inputs.force && '--force' || '' }}
+
+      - name: Run the bot
+        if: steps.check.outputs.run == 'true'
+        run: python bot/main.py
