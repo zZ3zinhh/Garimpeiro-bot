@@ -101,12 +101,20 @@ def load_sent_keys():
         offset += PAGE_SIZE
 
 
-def save_sent(person_id, deal_id):
-    """Remember one alert right after it was sent, so a crash never sends it twice."""
+def save_sent(person_id, deal, reason):
+    """Remember one alert right after it was sent, so a crash never sends it twice.
+    Also keeps the title/price/link so the app can show the latest deals."""
     _request(
         "POST",
         "sent_alerts",
-        {"person_id": person_id, "deal_id": deal_id},
+        {
+            "person_id": person_id,
+            "deal_id": deal["id"],
+            "title": deal["title"],
+            "price": deal["price"],
+            "link": deal["link"],
+            "reason": reason,
+        },
         prefer="resolution=ignore-duplicates",
     )
 

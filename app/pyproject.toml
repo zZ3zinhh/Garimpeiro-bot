@@ -1,0 +1,17 @@
+[project]
+name = "garimpeiro"
+version = "0.1.0"
+description = "Avisos de promoções para amigos e família"
+requires-python = ">=3.10"
+dependencies = [
+  "flet==1.1.1",
+  "certifi",
+]
+
+[tool.flet]
+org = "br.garimpeiro"
+product = "Garimpeiro"
+company = "Garimpeiro"
+
+[tool.flet.app]
+path = "src"

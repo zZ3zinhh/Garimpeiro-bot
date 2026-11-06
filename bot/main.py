@@ -63,7 +63,7 @@ def main():
                 continue
             try:
                 alert(person, deal, reason, detail)
-                db.save_sent(person["id"], deal["id"])
+                db.save_sent(person["id"], deal, reason)
                 already_sent.add(key)
                 count += 1
             except Exception as error:
