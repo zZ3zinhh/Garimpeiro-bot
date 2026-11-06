@@ -1,0 +1,22 @@
+{
+  "people": [
+    {
+      "name": "Your name",
+      "ntfy_topic": "promo-change-this-to-something-hard-to-guess",
+      "whatsapp": {"enabled": false, "phone": "+5511999999999", "apikey": ""},
+      "tags": [
+        {
+          "text": "rtx 5060 ti",
+          "blocked_words": ["notebook", "pc gamer", "computador"],
+          "max_price": 3500,
+          "absurd_alert": true,
+          "market_price": 3000,
+          "limit_pct": 50
+        }
+      ],
+      "categories": [
+        {"category": "computers", "min_discount_pct": 50, "min_temperature": 500}
+      ]
+    }
+  ]
+}

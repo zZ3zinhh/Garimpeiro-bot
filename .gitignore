@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+bot/config.json
+bot/sent.json
+.env
+bot/bot_log.txt
+node_modules/
+package.json
+package-lock.json
