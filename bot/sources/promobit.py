@@ -7,6 +7,20 @@ from .common import download_page, new_deal
 SITE = "https://www.promobit.com.br"
 
 
+def fetch_details(link):
+    """Opens one offer page and reads two extras the list page doesn't have:
+    - meter_zone: the "Oba, o preço está incrível!" price meter (1 = best, 2 = ok, 3+ = pricier).
+      Only about 1 in 3 offers has it, otherwise None.
+    - store_verified: Promobit verified the store and its CNPJ."""
+    soup = BeautifulSoup(download_page(link), "html.parser")
+    offer = json.loads(soup.find("script", id="__NEXT_DATA__").string)["props"]["pageProps"]["serverOffer"]
+    reference = offer.get("referencePrices") or {}
+    return {
+        "meter_zone": reference.get("zonePrice"),
+        "store_verified": bool(offer.get("isStoreVerified") and offer.get("isStoreCnpjValid")),
+    }
+
+
 def fetch(category=None):
     """Fetch recent deals. If 'category' is given (e.g. "informatica"),
     fetch only that category's deals."""

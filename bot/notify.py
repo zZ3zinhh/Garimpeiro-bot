@@ -1,14 +1,10 @@
 # Sends the alerts: ntfy (always) and WhatsApp via CallMeBot (if the person wants).
 # The notification text is in Portuguese because friends and family read it.
+from urllib.parse import quote_plus
+
 import requests
 
-# How each category name shows up in the notification
-CATEGORY_LABELS = {
-    "computers": "Informática",
-    "games": "Games",
-    "phones": "Celulares",
-    "electronics": "Eletrônicos",
-}
+from matcher import CATEGORIES
 
 
 def format_brl(value):
@@ -24,7 +20,7 @@ def build_message(deal, reason, detail):
     if reason == "absurd":
         title = f"🔥 PROMOÇÃO ABSURDA: {detail}"
     elif reason == "category":
-        title = f"💸 Promoção em {CATEGORY_LABELS.get(detail, detail)}"
+        title = f"💸 Promoção em {CATEGORIES.get(detail, {}).get('label', detail)}"
     else:
         title = f"🔔 {detail}"
 
@@ -44,19 +40,35 @@ def build_message(deal, reason, detail):
         extras.append(deal["store"])
     extras.append(deal["site"].capitalize())
     lines.append(" · ".join(extras))
+
+    # Extra signals, only when we know them (we open the Promobit page for some deals).
+    if deal.get("meter_zone") == 1:
+        lines.append("📉 O Promobit marca este preço como incrível")
+    if deal.get("store_verified"):
+        lines.append("✅ Loja verificada pelo Promobit")
     return title, "\n".join(lines)
 
 
-def send_ntfy(topic, title, body, link, urgent=False):
+def reputation_link(deal):
+    """A Google search for the store's Reclame Aqui page (the real API is not free)."""
+    if not deal.get("store"):
+        return None
+    return "https://www.google.com/search?q=" + quote_plus(f"reclame aqui {deal['store']}")
+
+
+def send_ntfy(topic, title, body, link, urgent=False, store_link=None):
     """Send to the ntfy app. We use JSON because it handles accents and emojis."""
-    requests.post("https://ntfy.sh/", json={
+    message = {
         "topic": topic,
         "title": title,
         "message": body,
         "click": link,                     # tapping the notification opens the deal
         "priority": 5 if urgent else 3,    # 5 = max, 3 = default
         "tags": ["rotating_light"] if urgent else ["shopping_cart"],
-    }, timeout=30).raise_for_status()
+    }
+    if store_link:  # a button under the notification
+        message["actions"] = [{"action": "view", "label": "Reputação da loja", "url": store_link}]
+    requests.post("https://ntfy.sh/", json=message, timeout=30).raise_for_status()
 
 
 def send_whatsapp(phone, apikey, title, body, link):
@@ -69,7 +81,8 @@ def send_whatsapp(phone, apikey, title, body, link):
 
 def alert(person, deal, reason, detail):
     title, body = build_message(deal, reason, detail)
-    send_ntfy(person["ntfy_topic"], title, body, deal["link"], urgent=(reason == "absurd"))
+    send_ntfy(person["ntfy_topic"], title, body, deal["link"],
+              urgent=(reason == "absurd"), store_link=reputation_link(deal))
 
     whatsapp = person.get("whatsapp") or {}
     if whatsapp.get("enabled") and whatsapp.get("phone") and whatsapp.get("apikey"):

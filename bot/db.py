@@ -56,6 +56,7 @@ def load_people():
             "id": row["id"],
             "name": row["name"],
             "ntfy_topic": row["ntfy_topic"],
+            "only_trusted_stores": row.get("only_trusted_stores", False),
             "whatsapp": {
                 "enabled": row["whatsapp_enabled"],
                 "phone": row["whatsapp_phone"],
@@ -65,6 +66,8 @@ def load_people():
                 {
                     "text": t["text"],
                     "blocked_words": t["blocked_words"],
+                    "keywords": t.get("keywords") or [],   # new columns: missing until the
+                    "brands": t.get("brands") or [],       # SQL migration has been run
                     "max_price": t["max_price"],
                     "absurd_alert": t["absurd_alert"],
                     "market_price": t["market_price"],

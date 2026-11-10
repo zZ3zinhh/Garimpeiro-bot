@@ -30,6 +30,9 @@ def new_deal(**fields):
         "categories": [],      # e.g. ["informatica"] or ["tech-lover"]
         "store": "",
         "link": "",
+        # Filled in later, only when needed (Promobit offer page):
+        "meter_zone": None,      # Promobit price meter: 1 = "price is incredible"
+        "store_verified": None,  # Promobit says the store is verified
     }
     deal.update(fields)
     return deal

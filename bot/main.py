@@ -40,6 +40,22 @@ def fetch_all_deals(people):
     return list(by_id.values())
 
 
+_enriched = set()  # deals whose Promobit offer page was already opened in this run
+
+
+def enrich(deal):
+    """Opens the Promobit offer page of a deal (once) to learn its price meter and
+    whether the store is verified. Only called for deals someone might get alerted about."""
+    if deal["site"] != "promobit" or deal["id"] in _enriched:
+        return
+    _enriched.add(deal["id"])
+    try:
+        deal.update(promobit.fetch_details(deal["link"]))
+    except Exception as error:
+        print(f"   ! Could not read the offer page: {error}")
+    time.sleep(0.5)  # a polite pause
+
+
 def main():
     test_mode = "--test" in sys.argv
     people = db.load_people()
@@ -54,7 +70,7 @@ def main():
             key = f"{person['id']}|{deal['id']}"
             if key in already_sent:
                 continue
-            result = evaluate(deal, person)
+            result = evaluate(deal, person, enrich)
             if result is None:
                 continue
             reason, detail = result

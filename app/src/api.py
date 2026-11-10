@@ -60,9 +60,11 @@ def get_profile(code):
     return _rpc("app_get_profile", {"p_code": code})
 
 
-def save_tag(code, tag_id, text, blocked_words, max_price, absurd_alert, market_price, limit_pct):
+def save_tag(code, tag_id, text, keywords, brands, blocked_words,
+             max_price, absurd_alert, market_price, limit_pct):
     return _rpc("app_save_tag", {
-        "p_code": code, "p_id": tag_id, "p_text": text, "p_blocked_words": blocked_words,
+        "p_code": code, "p_id": tag_id, "p_text": text,
+        "p_keywords": keywords, "p_brands": brands, "p_blocked_words": blocked_words,
         "p_max_price": max_price, "p_absurd_alert": absurd_alert,
         "p_market_price": market_price, "p_limit_pct": limit_pct,
     })
@@ -87,6 +89,13 @@ def save_settings(code, whatsapp_enabled, whatsapp_phone, whatsapp_apikey):
     return _rpc("app_save_settings", {
         "p_code": code, "p_whatsapp_enabled": whatsapp_enabled,
         "p_whatsapp_phone": whatsapp_phone, "p_whatsapp_apikey": whatsapp_apikey,
+    })
+
+
+def save_preferences(code, saved_blocked_words, only_trusted_stores):
+    return _rpc("app_save_preferences", {
+        "p_code": code, "p_saved_blocked_words": saved_blocked_words,
+        "p_only_trusted_stores": only_trusted_stores,
     })
 
 

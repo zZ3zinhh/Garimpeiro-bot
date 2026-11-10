@@ -6,7 +6,7 @@ import sys
 
 import db
 
-STALE_AFTER_MINUTES = 25  # the PC runs every 10 min, so 25 min of silence means it's off
+STALE_AFTER_MINUTES = 20  # the PC runs every 10 min, so 20 min of silence means it is off
 
 
 def main():
