@@ -57,6 +57,13 @@ def load_people():
             "name": row["name"],
             "ntfy_topic": row["ntfy_topic"],
             "only_trusted_stores": row.get("only_trusted_stores", False),
+            "quiet": {  # "do not disturb": missing until the SQL migration #3 has been run
+                "now": row.get("quiet_now", False),
+                "schedule_enabled": row.get("quiet_schedule_enabled", False),
+                "start": row.get("quiet_start") or "22:00",
+                "end": row.get("quiet_end") or "07:00",
+                "allow_absurd": row.get("quiet_allow_absurd", False),
+            },
             "whatsapp": {
                 "enabled": row["whatsapp_enabled"],
                 "phone": row["whatsapp_phone"],

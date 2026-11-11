@@ -118,6 +118,14 @@ def join_words(words):
     return ", ".join(words or [])
 
 
+def valid_time(text):
+    """'22:00' -> True | '7:5' / '25:00' / 'abc' -> False"""
+    parts = (text or "").strip().split(":")
+    if len(parts) != 2 or not all(p.isdigit() for p in parts) or len(parts[0]) != 2 or len(parts[1]) != 2:
+        return False
+    return 0 <= int(parts[0]) <= 23 and 0 <= int(parts[1]) <= 59
+
+
 def format_date(iso_text):
     try:
         return datetime.fromisoformat(iso_text).astimezone().strftime("%d/%m %H:%M")
@@ -348,6 +356,12 @@ class GarimpeiroApp:
                     ft.TextButton(content="Já fiz isso", on_click=dismiss),
                 ], wrap=True),
             ], spacing=6), color=ft.Colors.PRIMARY_CONTAINER))
+
+        if self.profile.get("quiet_now"):
+            items.append(self.card(ft.Row([
+                ft.Text("🌙 Não perturbe ligado: os avisos chegam sem som.", expand=True),
+                ft.TextButton(content="Ajustes", on_click=self.go_to_tab(TAB_SETTINGS)),
+            ]), color=ft.Colors.SECONDARY_CONTAINER))
 
         items.append(self.big_button("Novo alerta", ft.Icons.ADD, lambda e: self.open_tag_dialog()))
 
@@ -692,6 +706,36 @@ class GarimpeiroApp:
         async def toggle_trusted(e):
             await save_prefs(saved, bool(e.control.value))
 
+        # --- do not disturb ---
+        f_quiet_now = ft.Switch(label="Silenciar agora", value=bool(profile.get("quiet_now")))
+        f_quiet_schedule = ft.Switch(label="Silenciar todo dia neste horário",
+                                     value=bool(profile.get("quiet_schedule_enabled")))
+        f_quiet_start = ft.TextField(label="Das", value=profile.get("quiet_start") or "22:00",
+                                     width=110, text_align=ft.TextAlign.CENTER,
+                                     keyboard_type=ft.KeyboardType.DATETIME)
+        f_quiet_end = ft.TextField(label="Até", value=profile.get("quiet_end") or "07:00",
+                                   width=110, text_align=ft.TextAlign.CENTER,
+                                   keyboard_type=ft.KeyboardType.DATETIME)
+        f_quiet_absurd = ft.Switch(label="Promoções absurdas 🔥 ainda tocam",
+                                   value=bool(profile.get("quiet_allow_absurd")))
+
+        async def save_quiet(e):
+            start, end = (f_quiet_start.value or "").strip(), (f_quiet_end.value or "").strip()
+            if not valid_time(start) or not valid_time(end):
+                self.toast("Use o horário no formato 22:00")
+                return
+            try:
+                await call(api.save_quiet, self.code, bool(f_quiet_now.value),
+                           bool(f_quiet_schedule.value), start, end, bool(f_quiet_absurd.value))
+            except api.ApiError as error:
+                self.toast(str(error))
+                return
+            profile.update(quiet_now=bool(f_quiet_now.value),
+                           quiet_schedule_enabled=bool(f_quiet_schedule.value),
+                           quiet_start=start, quiet_end=end,
+                           quiet_allow_absurd=bool(f_quiet_absurd.value))
+            self.toast("Salvo!")
+
         # --- WhatsApp ---
         f_whatsapp = ft.Switch(label="Receber também no WhatsApp",
                                value=bool(profile.get("whatsapp_enabled")))
@@ -711,6 +755,19 @@ class GarimpeiroApp:
 
         return self.list_view([
             self.title("Ajustes", "Deixe o Garimpeiro do seu jeito"),
+
+            self.card(ft.Column([
+                ft.Text("🌙 Não perturbe", weight=ft.FontWeight.BOLD, size=16),
+                ft.Text("Os avisos continuam chegando, mas sem som nem vibração. "
+                        "Só o Garimpeiro fica quieto: os outros apps do celular, como ligações "
+                        "e emergências, não são afetados.", size=12,
+                        color=ft.Colors.ON_SURFACE_VARIANT),
+                f_quiet_now,
+                f_quiet_schedule,
+                ft.Row([f_quiet_start, f_quiet_end], spacing=12),
+                f_quiet_absurd,
+                ft.FilledButton(content="Salvar", on_click=save_quiet),
+            ], spacing=8)),
 
             self.card(ft.Column([
                 ft.Text("📲 Avisos no celular", weight=ft.FontWeight.BOLD, size=16),

@@ -99,6 +99,13 @@ def save_preferences(code, saved_blocked_words, only_trusted_stores):
     })
 
 
+def save_quiet(code, quiet_now, schedule_enabled, start, end, allow_absurd):
+    return _rpc("app_save_quiet", {
+        "p_code": code, "p_quiet_now": quiet_now, "p_schedule_enabled": schedule_enabled,
+        "p_start": start, "p_end": end, "p_allow_absurd": allow_absurd,
+    })
+
+
 def recent_alerts(code):
     return _rpc("app_recent_alerts", {"p_code": code, "p_limit": 30})
 
